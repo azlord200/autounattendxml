@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Générateur autounattend.xml</title>
+  <style>
+    :root {
+      --bg1: #0b1220; --bg2: #0e1730;
+      --card: #0f1a33cc; --border: #1e2a47; --muted: #9fb0ca; --text: #e9eef7;
+      --brand: #7c5cff; --brand2: #4cc9f0; --ok: #22c55e; --warn: #ef4444;
+      --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+      --radius: 18px;
+    }
+
+    /* Mode clair */
+    [data-theme="light"] {
+      --bg1: #f0f4f9; --bg2: #e6edf7;
+      --card: #ffffff; --border: #d1d9e6; --muted: #6b7280; --text: #1f2937;
+      --brand: #6366f1; --brand2: #3b82f6; --ok: #16a34a; --warn: #dc2626;
+      --shadow: 0 10px 30px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,.8);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; 
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 600px at 20% -10%, #1a2a5a55, transparent 50%),
+                  radial-gradient(1000px 800px at 120% 10%, #2a4a9a33, transparent 40%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2) 70%);
+      color: var(--text);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .wrap { max-width: 1200px; margin: 32px auto; padding: 0 18px; }
+    header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .title { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, var(--brand), var(--brand2)); display: grid; place-items: center; box-shadow: var(--shadow); }
+    .logo svg { width: 22px; height: 22px; color: white; }
+    h1 { margin: 0; font-size: clamp(22px, 3vw, 34px); letter-spacing: .2px; }
+    .grid { display: grid; gap: 18px; }
+    @media (min-width: 980px) { .grid { grid-template-columns: 1.15fr .85fr; } }
+    .card { 
+      background: color-mix(in srgb, var(--card) 90%, transparent);
+      border: 1px solid var(--border); 
+      border-radius: var(--radius); 
+      padding: 18px; 
+      box-shadow: var(--shadow); 
+      backdrop-filter: blur(10px); 
+    }
+    .card h2 { margin: 0 0 10px; font-size: 16px; color: color-mix(in srgb, var(--text) 90%, var(--brand)); }
+    fieldset { border: 1px dashed var(--border); border-radius: 14px; padding: 12px; margin: 12px 0; }
+    legend { padding: 0 8px; color: var(--muted); font-size: 12px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 6px; }
+    input[type=text], input[type=password], input[type=number], select, textarea {
+      width: 100%; color: var(--text); background: color-mix(in srgb, var(--card) 80%, transparent); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--brand2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand2) 20%, transparent); }
+    .row { display: flex; gap: 10px; } 
+    .row > * { flex: 1; }
+    .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .btn {
+      appearance: none; 
+      border: 1px solid var(--border); 
+      background: color-mix(in srgb, var(--card) 80%, transparent); 
+      color: var(--text);
+      padding: 10px 14px; 
+      border-radius: 12px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; 
+      text-decoration: none; 
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+    }
+    .btn:hover { border-color: var(--brand2); transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 80%, white), var(--brand)); border-color: color-mix(in srgb, var(--brand) 70%, black); color: white; }
+    .btn-success { background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 80%, white), var(--ok)); border-color: color-mix(in srgb, var(--ok) 70%, black); color: white; }
+    .btn-danger { background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 80%, white), var(--warn)); border-color: color-mix(in srgb, var(--warn) 70%, black); color: white; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .warning { 
+      background: color-mix(in srgb, var(--warn) 15%, transparent); 
+      border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); 
+      color: color-mix(in srgb, var(--warn) 70%, black); 
+      padding: 12px; 
+      border-radius: 14px; 
+      font-size: 13px; 
+      margin-bottom: 8px; 
+    }
+    textarea { min-height: 340px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    footer { margin: 26px 0 40px; text-align: center; color: var(--muted); }
+    .github { 
+      color: var(--text); 
+      text-decoration: none; 
+      border: 1px solid var(--border); 
+      padding: 10px 14px; 
+      border-radius: 12px; 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; 
+      transition: all 0.2s ease;
+    }
+    .github:hover { border-color: var(--brand2); transform: translateY(-1px); }
+    .diag { margin-top: 10px; font-size: 12px; color: color-mix(in srgb, var(--warn) 80%, white); white-space: pre-wrap; }
+    
+    /* Bouton de changement de thème */
+    .theme-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      z-index: 100;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle:hover {
+      transform: rotate(15deg) scale(1.1);
+    }
+    
+    .theme-toggle svg {
+      width: 24px;
+      height: 24px;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/><path d="M9 7v10M15 7v10"/></svg>
+        </div>
+        <div>
+          <h1>Générateur <code>autounattend.xml</code></h1>
+          <div class="hint">Windows 10 / 11</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="warning">⚠️ Les modes GPT/MBR effacent le disque 0 et recréent les partitions. Utilisez-les avec prudence.</div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Paramètres</h2>
+        <form id="form">
+          <fieldset>
+            <legend>Général</legend>
+            <div class="row">
+              <div>
+                <label for="winVersion">Version de Windows</label>
+                <select id="winVersion">
+                  <option value="11" selected>Windows 11</option>
+                  <option value="10">Windows 10</option>
+                </select>
+              </div>
+              <div>
+                <label for="edition">Édition</label>
+                <select id="edition">
+                  <option value="">Auto (détection)</option>
+                  <option value="home">Home</option>
+                  <option value="home_sl">Home Single Language</option>
+                  <option value="pro" selected>Pro</option>
+                  <option value="pro_n">Pro N</option>
+                  <option value="pro_workstations">Pro for Workstations</option>
+                  <option value="pro_workstations_n">Pro for Workstations N</option>
+                  <option value="pro_education">Pro Education</option>
+                  <option value="pro_education_n">Pro Education N</option>
+                  <option value="education">Education</option>
+                  <option value="education_n">Education N</option>
+                  <option value="enterprise">Enterprise</option>
+                  <option value="enterprise_n">Enterprise N</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="productKey">Clé produit (facultatif)</label>
+                <input id="productKey" type="text" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" />
+                <div class="hint">Peut être vide ou clé générique d'évaluation.</div>
+              </div>
+              <div>
+                <label for="imageIndex">Index de l'image (facultatif)</label>
+                <input id="imageIndex" type="number" min="1" placeholder="1" />
+                <div class="hint">Si renseigné, l'index a priorité sur l'édition.</div>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="uiLang">Langue / UI</label>
+                <select id="uiLang">
+                  <option value="fr-FR" selected>fr-FR (Français)</option>
+                  <option value="en-US">en-US (English)</option>
+                  <option value="de-DE">de-DE (Deutsch)</option>
+                  <option value="es-ES">es-ES (Español)</option>
+                  <option value="it-IT">it-IT (Italiano)</option>
+                </select>
+              </div>
+              <div>
+                <label for="kbd">Clavier</label>
+                <select id="kbd">
+                  <option value="fr-FR" selected>fr-FR (AZERTY)</option>
+                  <option value="en-US">en-US (QWERTY)</option>
+                  <option value="de-DE">de-DE (QWERTZ)</option>
+                  <option value="es-ES">es-ES</option>
+                  <option value="it-IT">it-IT</option>
+                </select>
+                <div class="hint">Synchronisé avec la langue UI</div>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="tz">Fuseau horaire</label>
+                <select id="tz">
+                  <optgroup label="UTC">
+                    <option value="UTC">UTC</option>
+                    <option value="GMT Standard Time">GMT Standard Time (UK/IE)</option>
+                    <option value="Greenwich Standard Time">Greenwich Standard Time (Islande)</option>
+                  </optgroup>
+                  <optgroup label="Europe occidentale (UTC+1)">
+                    <option value="Romance Standard Time" selected>Romance Standard Time (Paris/Bruxelles/Madrid)</option>
+                    <option value="W. Europe Standard Time">W. Europe Standard Time (Amsterdam/Berlin/Rome/Stockholm/Vienne)</option>
+                    <option value="Central Europe Standard Time">Central Europe Standard Time (Belgrade/Bratislava/Budapest/Ljubljana/Prague)</option>
+                    <option value="Central European Standard Time">Central European Standard Time (Sarajevo/Skopje/Warsaw/Zagreb)</option>
+                  </optgroup>
+                  <optgroup label="Europe orientale (UTC+2)">
+                    <option value="GTB Standard Time">GTB Standard Time (Athènes/Bucarest)</option>
+                    <option value="E. Europe Standard Time">E. Europe Standard Time (Chisinau)</option>
+                    <option value="FLE Standard Time">FLE Standard Time (Helsinki/Kyiv/Riga/Sofia/Tallinn/Vilnius)</option>
+                    <option value="Israel Standard Time">Israel Standard Time (Jérusalem)</option>
+                    <option value="Jordan Standard Time">Jordan Standard Time (Amman)</option>
+                    <option value="Turkey Standard Time">Turkey Standard Time (Istanbul)</option>
+                    <option value="Kaliningrad Standard Time">Kaliningrad Standard Time (Kaliningrad)</option>
+                    <option value="Belarus Standard Time">Belarus Standard Time (Minsk)</option>
+                  </optgroup>
+                  <optgroup label="Russie & voisinage (UTC+3..+4)">
+                    <option value="Russian Standard Time">Russian Standard Time (Moscou/St‑Pétersbourg)</option>
+                    <option value="Astrakhan Standard Time">Astrakhan Standard Time (Astrakhan)</option>
+                    <option value="Saratov Standard Time">Saratov Standard Time (Saratov)</option>
+                    <option value="Volgograd Standard Time">Volgograd Standard Time (Volgograd)</option>
+                    <option value="Georgian Standard Time">Georgian Standard Time (Tbilissi)</option>
+                    <option value="Azerbaijan Standard Time">Azerbaijan Standard Time (Bakou)</option>
+                    <option value="Caucasus Standard Time">Caucasus Standard Time (Erevan)</option>
+                  </optgroup>
+                  <optgroup label="Atlantique (Europe)">
+                    <option value="Azores Standard Time">Azores Standard Time (Açores)</option>
+                    <option value="Morocco Standard Time">Morocco Standard Time (Maroc)</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div>
+                <label for="computerName">Nom d'ordinateur</label>
+                <input id="computerName" type="text" value="*">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Comptes & OOBE</legend>
+            <div class="row">
+              <label><input id="createUserToggle" type="checkbox" checked> Créer un compte local</label>
+              <label><input id="enableAdminToggle" type="checkbox"> Activer Administrateur intégré</label>
+            </div>
+            <div id="userFields">
+              <div class="row">
+                <div>
+                  <label for="username">Nom d'utilisateur</label>
+                  <input id="username" type="text" value="tech">
+                </div>
+                <div>
+                  <label for="userPass">Mot de passe</label>
+                  <input id="userPass" type="password" placeholder="••••••••">
+                </div>
+              </div>
+              <div class="row">
+                <label><input id="userIsAdmin" type="checkbox" checked> Ajouter au groupe Administrators</label>
+                <div>
+                  <label for="autologonCount">Ouverture de session auto (fois)</label>
+                  <input id="autologonCount" type="number" min="0" value="1">
+                </div>
+              </div>
+            </div>
+            <div id="adminFields" style="display:none;">
+              <div class="row">
+                <div>
+                  <label for="adminPass">Mot de passe Administrateur</label>
+                  <input id="adminPass" type="password" placeholder="••••••••">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <label><input id="skipOobe" type="checkbox" checked> Passer l'OOBE</label>
+              <label><input id="acceptEula" type="checkbox" checked> Accepter la licence automatiquement</label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Disque & Installation</legend>
+            <label><input type="radio" name="diskmode" value="available"> Installer sur la première partition disponible</label>
+            <label><input type="radio" name="diskmode" value="gpt" checked> Effacer le disque 0 et créer des partitions UEFI/GPT</label>
+            <label><input type="radio" name="diskmode" value="mbr"> Effacer le disque 0 et créer des partitions MBR</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Confidentialité & Télémétrie</legend>
+            <label><input type="checkbox" id="privacyTelemetryMin" checked> Télémétrie minimale (AllowTelemetry=0)</label>
+            <label><input type="checkbox" id="privacyAdsId" checked> Désactiver l'identifiant publicitaire</label>
+            <label><input type="checkbox" id="privacyTailored" checked> Désactiver expériences personnalisées / contenus suggérés</label>
+            <label><input type="checkbox" id="privacyFeedback" checked> Désactiver les demandes d'avis (feedback)</label>
+            <label><input type="checkbox" id="privacyLocation"> Désactiver la géolocalisation</label>
+            <label><input type="checkbox" id="privacySpeech"> Désactiver la reconnaissance vocale en ligne / personnalisation de saisie</label>
+            <label><input type="checkbox" id="privacyTips"> Désactiver les astuces et suggestions Windows</label>
+            <div class="row">
+              <label><input type="checkbox" id="includeFLC" checked> Inclure l'exécution automatique du script via <code>FirstLogonCommands</code></label>
+            </div>
+            <div class="row">
+              <div>
+                <label for="ps1Path">Chemin du script sur la machine</label>
+                <input id="ps1Path" type="text" value="C:\\Windows\\Setup\\Scripts\\post_install_confidentialite.ps1">
+                <div class="hint">Place ton script à cet emplacement pendant l'installation (ex: $OEM$ → C:\Windows\Setup\Scripts\).</div>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="btns">
+            <button type="button" class="btn btn-primary" id="btnGen">Générer l’XML</button>
+            <button type="button" class="btn btn-success" id="btnDlXml">Télécharger autounattend.xml</button>
+            <button type="button" class="btn" id="btnCopy">Copier l’aperçu</button>
+            <button type="reset" class="btn" id="btnReset">Réinitialiser</button>
+            <a id="downloadLink" style="display:none"></a>
+          </div>
+          <div class="diag" id="diag"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Aperçu du fichier XML</h2>
+        <textarea id="preview" spellcheck="false" placeholder="Cliquez sur ‘Générer l’XML’…"></textarea>
+      </div>
+    </div>
+
+    <footer>
+      <a class="github" href="https://github.com/azlord200" target="_blank" rel="noopener">GitHub @azlord200</a>
+    </footer>
+  </div>
+
+  <!-- Bouton de changement de thème -->
+  <div class="theme-toggle" id="themeToggle">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+      <path d="M12 3v1M12 20v1M3 12h1M20 12h1M18.364 5.636l-.707.707M5.636 18.364l-.707.707M18.364 18.364l-.707-.707M5.636 5.636l-.707-.707" />
+    </svg>
+  </div>
+
+  <script>
+    function logDiag(msg){ var d=document.getElementById('diag'); if(!d) return; d.textContent = msg; }
+    function esc(s){ s = s==null ? '' : String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&apos;'); }
+    function val(id){ var el=document.getElementById(id); return el?el.value:''; }
+    function checked(id){ var el=document.getElementById(id); return !!(el && el.checked); }
+
+    // Fonction de téléchargement
+    function downloadFile(filename, content, contentType) {
+      var blob = new Blob([content], { type: contentType });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function() {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      return true;
+    }
+
+    // Synchronisation automatique clavier/langue
+    document.getElementById('uiLang').addEventListener('change', function() {
+      const langMap = {
+        'fr-FR': 'fr-FR',
+        'en-US': 'en-US',
+        'de-DE': 'de-DE',
+        'es-ES': 'es-ES',
+        'it-IT': 'it-IT'
+      };
+      
+      const selectedLang = this.value;
+      document.getElementById('kbd').value = langMap[selectedLang] || 'en-US';
+    });
+
+    function imageName(version, key){
+      var base = (version==='11'?'Windows 11 ':'Windows 10 ');
+      var map={home:'Home',home_sl:'Home Single Language',pro:'Pro',pro_n:'Pro N',pro_workstations:'Pro for Workstations',pro_workstations_n:'Pro for Workstations N',pro_education:'Pro Education',pro_education_n:'Pro Education N',education:'Education',education_n:'Education N',enterprise:'Enterprise',enterprise_n:'Enterprise N'};
+      return map[key]?base+map[key]:'';
+    }
+
+    function buildXml(){
+      var version=val('winVersion');
+      var edition=val('edition');
+      var productKey=val('productKey').trim();
+      var imageIndex=val('imageIndex').trim();
+      var ui=val('uiLang'), kbd=val('kbd'), tz=val('tz'), pc=(val('computerName')||'*');
+      var accept=checked('acceptEula');
+      var skip=checked('skipOobe');
+      var createUser=checked('createUserToggle');
+      var enableAdmin=checked('enableAdminToggle');
+      var user=val('username'), pass=val('userPass');
+      var userIsAdmin=checked('userIsAdmin');
+      var autolog=parseInt(val('autologonCount')||'0',10)||0;
+      var adminPass=val('adminPass');
+      var diskmode=(document.querySelector('input[name="diskmode"]:checked')||{}).value||'gpt';
+      var includeFLC=checked('includeFLC');
+      var ps1Path=val('ps1Path');
+
+      var x=[];
+      x.push('<?xml version="1.0" encoding="utf-8"?>');
+      x.push('<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">');
+
+      // windowsPE
+      x.push('  <settings pass="windowsPE">');
+      x.push('    <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">');
+      x.push('      <InputLocale>'+esc(kbd)+'</InputLocale>');
+      x.push('      <SystemLocale>'+esc(ui)+'</SystemLocale>');
+      x.push('      <UILanguage>'+esc(ui)+'</UILanguage>');
+      x.push('      <UserLocale>'+esc(ui)+'</UserLocale>');
+      x.push('    </component>');
+      x.push('    <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">');
+      if(diskmode==='gpt' || diskmode==='mbr'){
+        x.push('      <DiskConfiguration>');
+        x.push('        <Disk wcm:action="add">');
+        x.push('          <DiskID>0</DiskID>');
+        x.push('          <WillWipeDisk>true</WillWipeDisk>');
+        x.push('          <CreatePartitions>');
+        if(diskmode==='gpt'){
+          x.push('            <CreatePartition wcm:action="add"><Order>1</Order><Type>EFI</Type><Size>100</Size></CreatePartition>');
+          x.push('            <CreatePartition wcm:action="add"><Order>2</Order><Type>MSR</Type><Size>16</Size></CreatePartition>');
+          x.push('            <CreatePartition wcm:action="add"><Order>3</Order><Type>Primary</Type><Extend>true</Extend></CreatePartition>');
+        } else {
+          x.push('            <CreatePartition wcm:action="add"><Order>1</Order><Type>Primary</Type><Size>500</Size></CreatePartition>');
+          x.push('            <CreatePartition wcm:action="add"><Order>2</Order><Type>Primary</Type><Extend>true</Extend></CreatePartition>');
+        }
+        x.push('          </CreatePartitions>');
+        x.push('          <ModifyPartitions>');
+        if(diskmode==='gpt'){
+          x.push('            <ModifyPartition wcm:action="add"><Order>1</Order><PartitionID>1</PartitionID><Format>FAT32</Format><Label>System</Label></ModifyPartition>');
+          x.push('            <ModifyPartition wcm:action="add"><Order>2</Order><PartitionID>3</PartitionID><Format>NTFS</Format><Label>Windows</Label><Letter>C</Letter></ModifyPartition>');
+        } else {
+          x.push('            <ModifyPartition wcm:action="add"><Order>1</Order><PartitionID>1</PartitionID><Format>NTFS</Format><Label>System Reserved</Label><Active>true</Active></ModifyPartition>');
+          x.push('            <ModifyPartition wcm:action="add"><Order>2</Order><PartitionID>2</PartitionID><Format>NTFS</Format><Label>Windows</Label><Letter>C</Letter></ModifyPartition>');
+        }
+        x.push('          </ModifyPartitions>');
+        x.push('        </Disk>');
+        x.push('        <WillShowUI>OnError</WillShowUI>');
+        x.push('      </DiskConfiguration>');
+      }
+      x.push('      <ImageInstall>');
+      x.push('        <OSImage>');
+      if(imageIndex){
+        x.push('          <InstallFrom>');
+        x.push('            <MetaData wcm:action="add">');
+        x.push('              <Key>/IMAGE/INDEX</Key>');
+        x.push('              <Value>'+esc(imageIndex)+'</Value>');
+        x.push('            </MetaData>');
+        x.push('          </InstallFrom>');
+      } else if(edition){
+        var name=imageName(version, edition);
+        if(name){
+          x.push('          <InstallFrom>');
+          x.push('            <MetaData wcm:action="add">');
+          x.push('              <Key>/IMAGE/NAME</Key>');
+          x.push('              <Value>'+esc(name)+'</Value>');
+          x.push('            </MetaData>');
+          x.push('          </InstallFrom>');
+        }
+      }
+      if(diskmode==='available'){
+        x.push('          <InstallToAvailablePartition>true</InstallToAvailablePartition>');
+      } else if(diskmode==='gpt'){
+        x.push('          <InstallTo><DiskID>0</DiskID><PartitionID>3</PartitionID></InstallTo>');
+      } else if(diskmode==='mbr'){
+        x.push('          <InstallTo><DiskID>0</DiskID><PartitionID>2</PartitionID></InstallTo>');
+      }
+      x.push('          <WillShowUI>OnError</WillShowUI>');
+      x.push('        </OSImage>');
+      x.push('      </ImageInstall>');
+      x.push('      <UserData>');
+      if(accept) x.push('        <AcceptEula>true</AcceptEula>');
+      if(productKey){
+        x.push('        <ProductKey>');
+        x.push('          <Key>'+esc(productKey)+'</Key>');
+        x.push('          <WillShowUI>OnError</WillShowUI>');
+        x.push('        </ProductKey>');
+      }
+      x.push('      </UserData>');
+      x.push('    </component>');
+      x.push('  </settings>');
+
+      // specialize
+      x.push('  <settings pass="specialize">');
+      x.push('    <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">');
+      x.push('      <InputLocale>'+esc(kbd)+'</InputLocale>');
+      x.push('      <SystemLocale>'+esc(ui)+'</SystemLocale>');
+      x.push('      <UILanguage>'+esc(ui)+'</UILanguage>');
+      x.push('      <UserLocale>'+esc(ui)+'</UserLocale>');
+      x.push('    </component>');
+      x.push('    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">');
+      x.push('      <TimeZone>'+esc(tz)+'</TimeZone>');
+      if(pc) x.push('      <ComputerName>'+esc(pc)+'</ComputerName>');
+      x.push('    </component>');
+      x.push('  </settings>');
+
+      // oobeSystem
+      x.push('  <settings pass="oobeSystem">');
+      x.push('    <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">');
+      x.push('      <InputLocale>'+esc(kbd)+'</InputLocale>');
+      x.push('      <SystemLocale>'+esc(ui)+'</SystemLocale>');
+      x.push('      <UILanguage>'+esc(ui)+'</UILanguage>');
+      x.push('      <UserLocale>'+esc(ui)+'</UserLocale>');
+      x.push('    </component>');
+      x.push('    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">');
+      x.push('      <OOBE>');
+      if(skip){
+        x.push('        <HideEULAPage>true</HideEULAPage>');
+        x.push('        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>');
+        x.push('        <NetworkLocation>Work</NetworkLocation>');
+        x.push('        <ProtectYourPC>1</ProtectYourPC>');
+        x.push('        <SkipMachineOOBE>true</SkipMachineOOBE>');
+        x.push('        <SkipUserOOBE>true</SkipUserOOBE>');
+      } else {
+        x.push('        <ProtectYourPC>1</ProtectYourPC>');
+      }
+      x.push('      </OOBE>');
+
+      if(createUser && user){
+        x.push('      <UserAccounts>');
+        x.push('        <LocalAccounts>');
+        x.push('          <LocalAccount wcm:action="add">');
+        if(pass){
+          x.push('            <Password>');
+          x.push('              <Value>'+esc(pass)+'</Value>');
+          x.push('              <PlainText>true</PlainText>');
+          x.push('            </Password>');
+        }
+        x.push('            <Description>Compte local créé pendant l\'installation</Description>');
+        x.push('            <DisplayName>'+esc(user)+'</DisplayName>');
+        x.push('            <Group>'+(userIsAdmin?'Administrators':'Users')+'</Group>');
+        x.push('            <Name>'+esc(user)+'</Name>');
+        x.push('          </LocalAccount>');
+        x.push('        </LocalAccounts>');
+        x.push('      </UserAccounts>');
+
+        if(autolog>0){
+          x.push('      <AutoLogon>');
+          if(pass){
+            x.push('        <Password>');
+            x.push('              <Value>'+esc(pass)+'</Value>');
+            x.push('              <PlainText>true</PlainText>');
+            x.push('            </Password>');
+          }
+          x.push('        <Enabled>true</Enabled>');
+          x.push('        <Username>'+esc(user)+'</Username>');
+          x.push('        <Domain>.</Domain>');
+          x.push('        <LogonCount>'+autolog+'</LogonCount>');
+          x.push('      </AutoLogon>');
+        }
+      }
+
+      if(enableAdmin && adminPass){
+        x.push('      <AdministratorPassword>');
+        x.push('        <Value>'+esc(adminPass)+'</Value>');
+        x.push('        <PlainText>true</PlainText>');
+        x.push('      </AdministratorPassword>');
+      }
+
+      if(includeFLC && ps1Path){
+        x.push('      <FirstLogonCommands>');
+        x.push('        <SynchronousCommand wcm:action="add">');
+        x.push('          <Order>1</Order>');
+        x.push('          <Description>Privacy script</Description>');
+        x.push('          <CommandLine>powershell.exe -ExecutionPolicy Bypass -File "'+esc(ps1Path)+'"</CommandLine>');
+        x.push('        </SynchronousCommand>');
+        x.push('      </FirstLogonCommands>');
+      }
+
+      x.push('    </component>');
+      x.push('  </settings>');
+
+      x.push('  <cpi:offlineImage cpi:source="wim://wimfile.wim#1" xmlns:cpi="urn:schemas-microsoft-com:cpi" />');
+      x.push('</unattend>');
+      return x.join('\n');
+    }
+
+    // UI bindings
+    document.getElementById('btnGen').addEventListener('click', function() {
+      try {
+        var xml = buildXml();
+        document.getElementById('preview').value = xml;
+        logDiag('XML généré avec succès.');
+      } catch(e) {
+        logDiag('Erreur génération: ' + (e.message || e));
+      }
+    });
+
+    document.getElementById('btnDlXml').addEventListener('click', function() {
+      try {
+        var xml = buildXml();
+        document.getElementById('preview').value = xml;
+        if (!downloadFile('autounattend.xml', xml, 'application/xml;charset=utf-8')) {
+          logDiag('Échec du téléchargement. Copiez depuis l\'aperçu.');
+        } else {
+          logDiag('Téléchargement lancé.');
+        }
+      } catch(e) {
+        logDiag('Erreur téléchargement: ' + (e.message || e));
+      }
+    });
+
+    document.getElementById('btnCopy').addEventListener('click', function() {
+      var t = document.getElementById('preview').value;
+      if (!t) {
+        t = buildXml();
+        document.getElementById('preview').value = t;
+      }
+      try {
+        navigator.clipboard.writeText(t);
+        logDiag('Copié dans le presse‑papiers.');
+      } catch(e) {
+        logDiag('Copie impossible: ' + (e.message || e));
+      }
+    });
+
+    document.getElementById('btnReset').addEventListener('click', function() {
+      setTimeout(function() {
+        document.getElementById('preview').value = '';
+        logDiag('Réinitialisé.');
+      }, 0);
+    });
+
+    // Toggles
+    function syncToggles(){ 
+      var uf=document.getElementById('userFields'); 
+      var af=document.getElementById('adminFields'); 
+      if(uf){ 
+        uf.style.display = (document.getElementById('createUserToggle').checked?'':'none'); 
+      } 
+      if(af){ 
+        af.style.display = (document.getElementById('enableAdminToggle').checked?'':'none'); 
+      } 
+    }
+    document.getElementById('createUserToggle').addEventListener('change', syncToggles);
+    document.getElementById('enableAdminToggle').addEventListener('change', syncToggles);
+    syncToggles();
+
+    // Gestion du thème
+    const themeToggle = document.getElementById('themeToggle');
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    const currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark' : 'light');
+    
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    
+    themeToggle.addEventListener('click', function() {
+      let theme = document.documentElement.getAttribute('data-theme');
+      theme = theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+    });
+
+    // Init preview
+    try{ 
+      document.getElementById('preview').value = buildXml(); 
+    }catch(e){ 
+      logDiag('Init preview error: '+(e.message||e)); 
+    }
+  </script>
+</body>
+</html>
